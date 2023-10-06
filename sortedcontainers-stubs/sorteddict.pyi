@@ -4,17 +4,17 @@ from typing import (
     Dict,
     Generic,
     Hashable,
-    Iterator,
-    Iterable,
     ItemsView,
+    Iterable,
+    Iterator,
     KeysView,
     List,
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     Type,
     TypeVar,
-    Tuple,
     Union,
     ValuesView,
     overload,
@@ -47,10 +47,7 @@ class SortedDict(Dict[_KT, _VT]):
     ) -> None: ...
     @overload
     def __init__(
-        self,
-        __key: _Key[_KT],
-        __iterable: Iterable[Tuple[_KT, _VT]],
-        **kwargs: _VT
+        self, __key: _Key[_KT], __iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT
     ) -> None: ...
     @property
     def key(self) -> Optional[_Key[_KT]]: ...
@@ -83,13 +80,11 @@ class SortedDict(Dict[_KT, _VT]):
     @overload
     def update(self, __map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
-    def update(
-        self, __iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT
-    ) -> None: ...
+    def update(self, __iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
     @overload
     def update(self, **kwargs: _VT) -> None: ...
     def __reduce__(
-        self
+        self,
     ) -> Tuple[
         Type[SortedDict[_KT, _VT]],
         Tuple[Callable[[_KT], Any], List[Tuple[_KT, _VT]]],
@@ -104,9 +99,7 @@ class SortedKeysView(KeysView[_KT_co], Sequence[_KT_co]):
     def __getitem__(self, index: slice) -> List[_KT_co]: ...
     def __delitem__(self, index: Union[int, slice]) -> None: ...
 
-class SortedItemsView(
-    ItemsView[_KT_co, _VT_co], Sequence[Tuple[_KT_co, _VT_co]]
-):
+class SortedItemsView(ItemsView[_KT_co, _VT_co], Sequence[Tuple[_KT_co, _VT_co]]):
     def __iter__(self) -> Iterator[Tuple[_KT_co, _VT_co]]: ...
     @overload
     def __getitem__(self, index: int) -> Tuple[_KT_co, _VT_co]: ...
