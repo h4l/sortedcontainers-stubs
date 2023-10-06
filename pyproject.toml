@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "sortedcontainers-stubs"
+version = "2.4.0.dev0"
+description = "Type stubs for sortedcontainers"
+authors = [
+    "Hal Blackburn <hwtb2@cam.ac.uk>",
+    "Martin Larralde <martin.larralde@embl.de>",
+    "Bryan Forbes <bryan@reigndropsfall.net>",
+    "David Robertson <david.m.robertson1@gmail.com>",
+    "Grant Jenks <contact@grantjenks.com>",
+]
+maintainers = ["Hal Blackburn <hwtb2@cam.ac.uk>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "sortedcontainers-stubs" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+sortedcontainers = "^2"
+typing-extensions = "^4.1.0" # 4.1.0 introduced Never
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.5.1"
+flake8 = { version = "^6.1.0", markers = "python_version >= '3.8.1'" }
+flake8-pyi = "^23.6.0"
+Flake8-pyproject = "^1.2.3"
+pytest = "^7.4.2"
+pytest-mypy-plugins = "^3.0.0"
+black = "^23.9.1"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203"
+
+# flake8-pyi conflicts with black's pyi style, so we disable its format errors
+# https://github.com/PyCQA/flake8-pyi/issues/20
+per-file-ignores = """
+    *.pyi: E, W
+"""
+
+[tool.isort]
+profile = "black"
+extra_standard_library = ["typing_extensions"]
+
+[tool.mypy]
+strict = true
