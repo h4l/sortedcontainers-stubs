@@ -1,8 +1,6 @@
 from typing import (
     Any,
     Callable,
-    Dict,
-    Generic,
     Hashable,
     ItemsView,
     Iterable,
@@ -10,6 +8,7 @@ from typing import (
     KeysView,
     List,
     Mapping,
+    MutableMapping,
     Optional,
     Sequence,
     Tuple,
@@ -19,6 +18,8 @@ from typing import (
     ValuesView,
     overload,
 )
+
+from _typeshed import SupportsKeysAndGetItem
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -30,7 +31,7 @@ _VT_co = TypeVar("_VT_co", covariant=True)
 _SD = TypeVar("_SD", bound=SortedDict)
 _Key = Callable[[_T], Any]
 
-class SortedDict(Dict[_KT, _VT]):
+class SortedDict(MutableMapping[_KT, _VT]):
     @overload
     def __init__(self, **kwargs: _VT) -> None: ...
     @overload
@@ -55,7 +56,9 @@ class SortedDict(Dict[_KT, _VT]):
     def iloc(self) -> SortedKeysView[_KT]: ...
     def clear(self) -> None: ...
     def __delitem__(self, key: _KT) -> None: ...
+    def __getitem__(self, __key: _KT) -> _VT: ...
     def __iter__(self) -> Iterator[_KT]: ...
+    def __len__(self) -> int: ...
     def __reversed__(self) -> Iterator[_KT]: ...
     def __setitem__(self, key: _KT, value: _VT) -> None: ...
     def _setitem(self, key: _KT, value: _VT) -> None: ...
@@ -78,7 +81,9 @@ class SortedDict(Dict[_KT, _VT]):
     def peekitem(self, index: int = ...) -> Tuple[_KT, _VT]: ...
     def setdefault(self, key: _KT, default: _VT = ...) -> _VT: ...
     @overload
-    def update(self, __map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
+    def update(
+        self, __map: SupportsKeysAndGetItem[_KT, _VT], **kwargs: _VT
+    ) -> None: ...
     @overload
     def update(self, __iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
     @overload
