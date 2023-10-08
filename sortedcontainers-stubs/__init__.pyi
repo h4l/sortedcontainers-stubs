@@ -3,12 +3,12 @@ from .sortedlist import SortedKeyList, SortedList, SortedListWithKey
 from .sortedset import SortedSet
 
 __all__ = [
-    "SortedList",
-    "SortedKeyList",
-    "SortedListWithKey",
     "SortedDict",
-    "SortedKeysView",
     "SortedItemsView",
-    "SortedValuesView",
+    "SortedKeyList",
+    "SortedKeysView",
+    "SortedList",
+    "SortedListWithKey",
     "SortedSet",
+    "SortedValuesView",
 ]

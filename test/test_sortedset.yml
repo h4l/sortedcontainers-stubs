@@ -1,0 +1,243 @@
+- case: constructor
+  main: |
+    from sortedcontainers import SortedSet
+
+    reveal_type(SortedSet[None, int]())  # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
+    reveal_type(SortedSet())             # N: Revealed type is "sortedcontainers.sortedset.SortedSet[<nothing>]"
+    reveal_type(SortedSet([1, 2, 3]))    # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
+    l: SortedSet[int] = SortedSet()
+    reveal_type(l)                       # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    reveal_type(SortedSet(None, str_to_int))               # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(SortedSet(iterable=None, key=str_to_int))  # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(SortedSet(key=str_to_int))                 # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+
+
+- case: constructor_errors
+  main: |
+    from sortedcontainers import SortedSet
+
+    def str_to_int_key(x: str) -> int:
+      return int(x)
+
+    # key func does not accept element type
+    SortedSet([1, 2, 3], key=str_to_int_key)  # ER: Argument "key" to "SortedSet" has incompatible type .* [arg-type]
+
+    # Without a key func, values must be hashable and comparable.
+
+    # Comparable but not hashable:
+    SortedSet([[]])  # E: Value of type variable "_OrderT" of "SortedSet" cannot be "list[<nothing>]"  [type-var]
+    # Hashable but not comparable:
+    SortedSet([object()])  # E: Value of type variable "_OrderT" of "SortedSet" cannot be "object"  [type-var]
+
+    # With a key func, values only need to be hashable:
+
+    # Comparable but not hashable:
+    SortedSet([[]], key=id)  # E: Value of type variable "_T" of "SortedSet" cannot be "list[<nothing>]"  [type-var]
+    # Hashable but not comparable:
+    SortedSet([object()], key=id)  # OK
+
+- case: operators
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+    ints = [1]
+    strs = ['z']
+
+    reveal_type(s == s)     # N: Revealed type is "builtins.bool"
+    reveal_type(s != s)     # N: Revealed type is "builtins.bool"
+    reveal_type(s < strs)   # N: Revealed type is "builtins.bool"
+    reveal_type(s <= strs)  # N: Revealed type is "builtins.bool"
+    reveal_type(s > strs)   # N: Revealed type is "builtins.bool"
+    reveal_type(s >= strs)  # N: Revealed type is "builtins.bool"
+
+    # Can't compare iterables of different types
+    s < ints   # E: Unsupported operand types for < ("SortedSet[str]" and "list[int]")  [operator]
+    s <= ints  # E: Unsupported operand types for <= ("SortedSet[str]" and "list[int]")  [operator]
+    s > ints   # E: Unsupported operand types for > ("SortedSet[str]" and "list[int]")  [operator]
+    s >= ints  # E: Unsupported operand types for >= ("SortedSet[str]" and "list[int]")  [operator]
+
+
+    # These methods can't add elements (only subtract), so they can accept any type
+    s.difference([4])
+    s - [4]
+    s.difference_update([4])
+    s -= [4]
+    s.intersection([4])
+    s & [4]
+    [4] & s
+    s.intersection_update([4])
+    s &= [4]
+
+    # These are OK - types match
+    s | ['z']
+    s |= ['z']
+    s ^ ['z']
+    s ^= ['z']
+
+    # It's not safe to merge SortedSets with iterables containing different
+    # types, because the elements may not be comparable to each other, which
+    # would produce a TypeError at runtime (test_sortedset.py has an example).
+
+    SortedSet(["a", "b"]) | ints  # E: Unsupported operand types for | ("SortedSet[str]" and "list[int]")  [operator]
+    s |= ints                     # E: Argument 1 to "__ior__" of "SortedSet" has incompatible type "list[int]"; expected "Iterable[str]"  [arg-type]
+    SortedSet(["a", "b"]) ^ ints  # E: Unsupported operand types for ^ ("SortedSet[str]" and "list[int]")  [operator]
+    s ^= ints                     # E: Argument 1 to "__ixor__" of "SortedSet" has incompatible type "list[int]"; expected "Iterable[str]"  [arg-type]
+
+- case: mutable_set_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+
+    object() in s                # E: Unsupported operand types for in ("object" and "SortedSet[str]")  [operator]
+    reveal_type('x' in s)        # N: Revealed type is "builtins.bool"
+    reveal_type(iter(s))         # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(len(s))          # N: Revealed type is "builtins.int"
+    reveal_type(s.add('x'))      # N: Revealed type is "None"
+    s.add(1)                     # E: Argument 1 to "add" of "SortedSet" has incompatible type "int"; expected "str"  [arg-type]
+    reveal_type(s.discard('a'))  # N: Revealed type is "None"
+    s.discard(1)                 # E: Argument 1 to "discard" of "SortedSet" has incompatible type "int"; expected "str"  [arg-type]
+
+- case: sequence_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+
+    reveal_type(s[0])         # N: Revealed type is "builtins.str"
+    reveal_type(s[0:5])       # N: Revealed type is "builtins.list[builtins.str]"
+    del s[0]
+    del s[0:5]
+    reveal_type(reversed(s))  # N: Revealed type is "builtins.reversed[builtins.str]"
+
+- case: removing_value_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+
+    reveal_type(s.pop())         # N: Revealed type is "builtins.str"
+    reveal_type(s.pop(0))        # N: Revealed type is "builtins.str"
+    reveal_type(s.pop(index=0))  # N: Revealed type is "builtins.str"
+    reveal_type(s.remove('a'))   # N: Revealed type is "None"
+    reveal_type(s.clear())       # N: Revealed type is "None"
+
+- case: set_operation_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+    ints = [1]
+
+
+    # Subtractive methods — these can accept any argument types
+    reveal_type(s.difference([1, 'a', []], [None]))           # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+    reveal_type(s.difference_update([1, 'a', []], [None]))    # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+    reveal_type(s.intersection([1, 'a', []], [None]))         # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+    reveal_type(s.intersection_update([1, 'a', []], [None]))  # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+
+
+    # Additive methods — these can only accept arguments with the same type as the set
+    reveal_type(s.symmetric_difference(['z']))         # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+    reveal_type(s.symmetric_difference_update(['z']))  # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+
+    # Cannot add different types
+    s.symmetric_difference(ints)         # E: Argument 1 to "symmetric_difference" of "SortedSet" has incompatible type "list[int]"; expected "Iterable[str]"  [arg-type]
+    s.symmetric_difference_update(ints)  # E: Argument 1 to "symmetric_difference_update" of "SortedSet" has incompatible type "list[int]"; expected "Iterable[str]"  [arg-type]
+
+    reveal_type(s.update(['a'], ['b']))  # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+
+    # Cannot add different types
+    s.update(ints)                       # E: Argument 1 to "update" of "SortedSet" has incompatible type "list[int]"; expected "Iterable[str]"  [arg-type]
+
+- case: misc_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+
+    reveal_type(s.key)         # N: Revealed type is "Union[def (builtins.str) -> Any, None]"
+    reveal_type(s.copy())      # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.str]"
+    reveal_type(s.count('x'))  # N: Revealed type is "builtins.int"
+
+- case: list_methods
+  main: |
+    from sortedcontainers import SortedSet
+    s = SortedSet(['a', 'b', 'c'])
+
+    reveal_type(s.bisect_left('a'))   # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect_right('a'))  # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect('a'))        # N: Revealed type is "builtins.int"
+    reveal_type(s.index('a'))         # N: Revealed type is "builtins.int"
+
+    reveal_type(s.irange())           # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.irange(             # N: Revealed type is "typing.Iterator[builtins.str]"
+      'a', 'z', (True, False), False
+    ))
+    reveal_type(s.irange(             # N: Revealed type is "typing.Iterator[builtins.str]"
+      minimum='a', maximum='z', inclusive=(True, False), reverse=False
+    ))
+
+    reveal_type(s.islice())                                 # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.islice(0, 10, False))                     # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.islice(start=0, stop=10, reverse=False))  # N: Revealed type is "typing.Iterator[builtins.str]"
+
+    reveal_type(s._reset(1000))  # N: Revealed type is "None"
+
+- case: key_fn_methods
+  main: |
+    from sortedcontainers import SortedSet
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    s = SortedSet(['20', '1'], str_to_int)
+
+    reveal_type(s)                      # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.bisect_key_left(5))   # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect_key_right(5))  # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect_key(5))        # N: Revealed type is "builtins.int"
+
+    reveal_type(s.irange_key(  # N: Revealed type is "typing.Iterator[builtins.str]"
+      5, 10, (True, False), True
+    ))
+    reveal_type(s.irange_key(  # N: Revealed type is "typing.Iterator[builtins.str]"
+      min_key=5, max_key=10, inclusive=(True, False), reverse=False
+    ))
+
+- case: value_order_type_persistence
+  main: |
+    from sortedcontainers import SortedSet
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    s = SortedSet(['20', '1'], str_to_int)
+
+    # The value and order types are not lost when creating derived sets
+    reveal_type(s.difference([1]))            # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s - ['90'])                   # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.intersection(['90']))       # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s & ['90'])                   # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(['90'] & s )                  # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.intersection_update('9'))   # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.symmetric_difference('9'))  # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s ^ ['90'])                   # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(['90'] ^ s)                   # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.union(['5']))               # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s | ['5'])                    # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(['5'] | s)                    # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+    reveal_type(s.update(['5']))              # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
+
+- case: SortedKeySet_cannot_be_imported_directly
+  main: |
+    # It's not exported from the top-level package
+    from sortedcontainers import SortedKeySet
+  expect_fail: true
+
+- case: SortedKeySet_cannot_be_created_using_constructor
+  main: |
+    from sortedcontainers.sortedset import SortedKeySet
+    reveal_type(SortedKeySet())
+  out: |
+    main:2: error: Missing named argument "this_type_only_exists_as_a_type_annotation_it_cannot_be_created_directly" for "SortedKeySet"  [call-arg]
+    main:2: note: Revealed type is "<nothing>"

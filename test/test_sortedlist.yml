@@ -1,0 +1,183 @@
+- case: constructor
+  main: |
+    from sortedcontainers import SortedList
+
+    reveal_type(SortedList())           # N: Revealed type is "sortedcontainers.sortedlist.SortedList[<nothing>]"
+    reveal_type(SortedList([1, 2, 3]))  # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
+    l: SortedList[int] = SortedList()
+    reveal_type(l)                      # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
+
+    # Because __new__'s overloads use two generic types, both need to be
+    # specified when subscripting a constructor call. I'd recommend not doing
+    # this and relying on inference via assignment or parameter types.
+    # (The first type is T which is not used in this overload.)
+    reveal_type(SortedList[None, int]())  # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    # SortedList constructor returns SortedKeyList when a key function is passed
+    reveal_type(SortedList(None, str_to_int))  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(SortedList(key=str_to_int))    # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+
+- case: SortedKeyList_constructor
+  main: |
+    from sortedcontainers import SortedList, SortedKeyList
+
+    # SortedKeyList constructor always returns SortedKeyList
+    reveal_type(SortedKeyList[int, int]())      # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.int, builtins.int]"
+    reveal_type(SortedKeyList())           # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[<nothing>, <nothing>]"
+    reveal_type(SortedKeyList([1, 2, 3]))  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.int, builtins.int]"
+
+    l: SortedKeyList[int, int] = SortedKeyList()
+
+    # Can create a SortedList with a non-comparable type like this
+    l2: SortedList[object] = SortedKeyList([[], object()], key=id)
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    reveal_type(SortedKeyList(None, str_to_int))  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(SortedKeyList(key=str_to_int))    # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+
+- case: constructor_errors
+  regex: true
+  main: |
+    from sortedcontainers import SortedList, SortedKeyList
+
+    def str_to_int_key(x: str) -> int:
+      return int(x)
+
+    # key func does not accept element type
+    SortedList([1, 2, 3], key=str_to_int_key)  # E: Argument "key" to "SortedList" has incompatible type .* [arg-type]
+
+    # Not comparable
+    SortedList([object()])  # E: Value of type variable "_OrderT" of "SortedList" cannot be "object"  \[type-var\]
+
+- case: comparison_operators
+  main: |
+    from sortedcontainers import SortedList
+    s = SortedList(['a'])
+    si = SortedList([1, 2])
+
+    reveal_type(s < s)   # N: Revealed type is "builtins.bool"
+    reveal_type(s <= s)  # N: Revealed type is "builtins.bool"
+    reveal_type(s > s)   # N: Revealed type is "builtins.bool"
+    reveal_type(s >= s)  # N: Revealed type is "builtins.bool"
+    # equality checks on different types is fine
+    reveal_type(s == si)  # N: Revealed type is "builtins.bool"
+    reveal_type(s != si)  # N: Revealed type is "builtins.bool"
+
+    # Can't compare order on different types
+    s < si   # E: Unsupported operand types for < ("SortedList[str]" and "SortedList[int]")  [operator]
+    s <= si  # E: Unsupported operand types for <= ("SortedList[str]" and "SortedList[int]")  [operator]
+    s > si   # E: Unsupported operand types for > ("SortedList[str]" and "SortedList[int]")  [operator]
+    s >= si  # E: Unsupported operand types for >= ("SortedList[str]" and "SortedList[int]")  [operator]
+
+- case: adding_methods
+  main: |
+    from sortedcontainers import SortedList
+    s = SortedList(['a'])
+
+    reveal_type(s.add('a'))            # N: Revealed type is "None"
+    reveal_type(s.update(['b', 'c']))  # N: Revealed type is "None"
+    reveal_type(s + s)                 # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.str]"
+    s += s
+    s += [1]                           # E: List item 0 has incompatible type "int"; expected "str"  [list-item]
+    reveal_type(s * 2)                 # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.str]"
+    reveal_type(2 * s)                 # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.str]"
+    s *= 2
+
+- case: removing_methods
+  main: |
+    from sortedcontainers import SortedList
+    s = SortedList(['a', 'b', 'c', 'd', 'e'])
+
+    reveal_type(s.pop())         # N: Revealed type is "builtins.str"
+    reveal_type(s.pop(0))        # N: Revealed type is "builtins.str"
+    reveal_type(s.discard('z'))  # N: Revealed type is "None"
+    reveal_type(s.remove('a'))   # N: Revealed type is "None"
+    del s[0]
+    del s[0:5]
+    reveal_type(s.clear())       # N: Revealed type is "None"
+
+- case: lookup_methods
+  main: |
+    from sortedcontainers import SortedList
+    s = SortedList(['a', 'b', 'c', 'd', 'e'])
+
+    reveal_type(s.bisect_left("b"))   # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect_right("b"))  # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect("b"))        # N: Revealed type is "builtins.int"
+    reveal_type(s.count("b"))         # N: Revealed type is "builtins.int"
+    reveal_type("b" in s)             # N: Revealed type is "builtins.bool"
+    reveal_type(s[2])                 # N: Revealed type is "builtins.str"
+    reveal_type(s[2:5])               # N: Revealed type is "builtins.list[builtins.str]"
+
+- case: iter_methods
+  main: |
+    from sortedcontainers import SortedList
+    s = SortedList(['a', 'b', 'c', 'd', 'e'])
+
+    reveal_type(s.irange())   # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.irange(     # N: Revealed type is "typing.Iterator[builtins.str]"
+      minimum="a", maximum="c", inclusive=(True, False), reverse=False
+    ))
+    reveal_type(s.islice())   # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.islice(     # N: Revealed type is "typing.Iterator[builtins.str]"
+      start=0, stop=3, reverse=False
+    ))
+    reveal_type(iter(s))      # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(reversed(s))  # N: Revealed type is "builtins.reversed[builtins.str]"
+
+- case: misc_methods
+  main: |
+    from sortedcontainers import SortedList
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    s = SortedList(['a', 'b', 'c', 'd', 'e'])
+    sk = SortedList(['1', '2'], key=str_to_int)
+
+    reveal_type(s.key)           # N: Revealed type is "Union[def (builtins.str) -> Any, None]"
+    reveal_type(s.copy())        # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.str]"
+    reveal_type(sk.copy())       # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(len(s))          # N: Revealed type is "builtins.int"
+    reveal_type(s._reset(9001))  # N: Revealed type is "None"
+
+- case: sorted_key_list_methods
+  main: |
+    from sortedcontainers import SortedList
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    s = SortedList(['1', '2'], key=str_to_int)
+
+    reveal_type(s.key)                  # N: Revealed type is "def (builtins.str) -> builtins.int"
+    reveal_type(s.bisect_key_left(4))   # N: Revealed type is "builtins.int"
+    reveal_type(s.bisect_key_right(4))  # N: Revealed type is "builtins.int"
+    reveal_type(s.irange_key())         # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.irange_key(0, 5))     # N: Revealed type is "typing.Iterator[builtins.str]"
+    reveal_type(s.irange_key(           # N: Revealed type is "typing.Iterator[builtins.str]"
+      0, 5, (True, False), False
+    ))
+    reveal_type(s.irange_key(           # N: Revealed type is "typing.Iterator[builtins.str]"
+      min_key=0, max_key=5, inclusive=(True, True), reverse=False
+    ))
+
+- case: value_order_type_persistence
+  main: |
+    from sortedcontainers import SortedList
+
+    def str_to_int(x: str) -> int:
+      return int(x)
+
+    s = SortedList(['1', '2'], key=str_to_int)
+
+    # The value and order types are maintained when creating new lists
+    reveal_type(s + ['5'])  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(['5'] + s)  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(s * 2)      # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
+    reveal_type(2 * s)      # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
