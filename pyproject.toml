@@ -2,6 +2,8 @@
 name = "sortedcontainers-stubs"
 version = "2.4.0.dev0"
 description = "Type stubs for sortedcontainers"
+homepage = "https://github.com/h4l/sortedcontainers-stubs"
+repository = "https://github.com/h4l/sortedcontainers-stubs"
 authors = [
     "Hal Blackburn <hwtb2@cam.ac.uk>",
     "Martin Larralde <martin.larralde@embl.de>",
@@ -13,6 +15,11 @@ maintainers = ["Hal Blackburn <hwtb2@cam.ac.uk>"]
 license = "Apache-2.0"
 readme = "README.md"
 packages = [{ include = "sortedcontainers-stubs" }]
+classifiers = ["Typing :: Stubs Only"]
+
+[tool.poetry.urls]
+Issues = "https://github.com/h4l/sortedcontainers-stubs/issues"
+Changes = "https://github.com/h4l/sortedcontainers-stubs/blob/main/CHANGELOG.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
