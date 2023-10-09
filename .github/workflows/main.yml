@@ -1,0 +1,112 @@
+name: "Test & lint project"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  BUILDKIT_PROGRESS: plain
+
+jobs:
+  # The bake file defines several targets to test and lint the project.
+  # We expand these and parametrise a GitHub Actions matrix with each value.
+  expand_bake_matrix:
+    name: Find the bakefile targets to run
+    runs-on: ubuntu-latest
+    outputs:
+      test_targets: ${{ steps.expand_bake_matrix.outputs.test_targets }}
+      lint_targets: ${{ steps.expand_bake_matrix.outputs.lint_targets }}
+      mypy_targets: ${{ steps.expand_bake_matrix.outputs.mypy_targets }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1
+
+      - name: Expand bats matrix
+        id: expand_bake_matrix
+        run: |
+          docker buildx bake --print \
+            | jq -cer '{test: .group.test.targets, lint: .group.lint.targets, mypy: .group.mypy.targets}
+                       | to_entries[]
+                       | {name: .key, targets: .value}
+                       | "\(.name)_targets=\(.targets | tojson)"' \
+            | tee -a "${GITHUB_OUTPUT:?}"
+
+  test:
+    name: Test type annotations
+    runs-on: ubuntu-latest
+    needs:
+      - expand_bake_matrix
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.expand_bake_matrix.outputs.test_targets) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1
+
+      - name: Run Unit Test Matrix
+        uses: docker/bake-action@f32f8b8d70bc284af19f8148dd14ad1d2fbc6c28
+        with:
+          targets: ${{ matrix.target }}
+          files: docker-bake.hcl
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+
+  lint:
+    name: lint checks
+    runs-on: ubuntu-latest
+    needs:
+      - expand_bake_matrix
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.expand_bake_matrix.outputs.lint_targets) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1
+
+      - name: Run Lint Matrix
+        uses: docker/bake-action@f32f8b8d70bc284af19f8148dd14ad1d2fbc6c28
+        with:
+          targets: ${{ matrix.target }}
+          files: docker-bake.hcl
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+
+  mypy:
+    name: Run mypy under several Python versions
+    runs-on: ubuntu-latest
+    needs:
+      - expand_bake_matrix
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.expand_bake_matrix.outputs.mypy_targets) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1
+
+      - name: Run Lint Matrix
+        uses: docker/bake-action@f32f8b8d70bc284af19f8148dd14ad1d2fbc6c28
+        with:
+          targets: ${{ matrix.target }}
+          files: docker-bake.hcl
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
