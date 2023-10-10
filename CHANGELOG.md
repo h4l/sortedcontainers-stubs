@@ -13,6 +13,14 @@ minor version; the patch version increments independently to release fixes.
 
 - Nothing yet
 
+## [2.4.1] — 2023-10-10
+
+### Fixed
+
+- Add `__all__` to define the explicit exports of `sortedcontainers.sorteddict`
+- Remove an internal `TypeVar` from the `__all__` of
+  `sortedcontainers.sortedlist`
+
 ## [2.4.0] — 2023-10-09
 
 ### Added
@@ -51,5 +59,6 @@ minor version; the patch version increments independently to release fixes.
 Created by Martin Larralde with review from several people in the PR.
 
 [unreleased]:
-  https://github.com/h4l/sortedcontainers-stubs/compare/stubs-v2.4.0...HEAD
-[2.4.0]: https://github.com/h4l/sortedcontainers-stubs/releases/tag/stubs-v2.4.0
+  https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.1...HEAD
+[2.4.1]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.0...2.4.1
+[2.4.0]: https://github.com/h4l/sortedcontainers-stubs/releases/tag/v2.4.0
