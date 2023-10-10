@@ -17,8 +17,8 @@ easier to use.
 $ pip install sortedcontainers-stubs
 ```
 
-Once you've installed the package, mypy should automatically find the types
-without any configuration.
+Once you've installed the package, mypy (or other tools) should automatically
+find the types without any configuration.
 
 ## Usage Notes
 
@@ -26,7 +26,7 @@ without any configuration.
 `sortedcontainers.sortedset.SortedKeySet` are stub-only subclasses of
 `SortedDict` and `SortedSet` — they don't exist at runtime. They exist as type
 stubs to describe the different return types of the `SortedDict` and `SortedSet`
-constructors, which vary depending if key function is used or not.
+constructors, which vary depending if a key function is used or not.
 
 However, `sortedcontainers.sortedlist.SortedKeyList` _is_ a real type that
 exists at runtime.
@@ -39,8 +39,8 @@ required to fix an issue. So if you're using sortedcontainers `2.4.X`, use the
 latest `2.4.X` version of sortedcontainers-stubs.
 
 Currently sortedcontainers-stubs version `2.4.0` has dependency metadata
-supporting sortedcontainers `>=2,<2.5` as there are minimal API differences in
-that range.
+supporting sortedcontainers `>=2,<3` as there are minimal API differences so far
+since 2.0.
 
 ## Reporting Issues
 
