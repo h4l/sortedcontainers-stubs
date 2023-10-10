@@ -6,7 +6,6 @@ from _typeshed import SupportsRichComparison
 
 __all__ = [
     "KeyFunc",
-    "_OrderT",
     "SortedKeyList",
     "SortedList",
     "SupportsRichComparison",
