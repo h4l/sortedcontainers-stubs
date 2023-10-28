@@ -11,11 +11,17 @@ minor version; the patch version increments independently to release fixes.
 
 ## [Unreleased]
 
+- Nothing yet
+
+## [2.4.2] — 2023-10-28
+
 ### Fixed
 
 - Using the SortedList (and the other) types as a function that creates an
-  instance of the type works in pyright now.
-  ([#3](https://github.com/h4l/sortedcontainers-stubs/issues/3))
+  instance of the type works in pyright now. ([#3], [#4])
+
+[#3]: https://github.com/h4l/sortedcontainers-stubs/issues/3
+[#4]: https://github.com/h4l/sortedcontainers-stubs/issues/4
 
 ### Changed
 
@@ -81,5 +87,6 @@ Created by Martin Larralde with review from several people in the PR.
 
 [unreleased]:
   https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.1...HEAD
+[2.4.2]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.1...2.4.2
 [2.4.1]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.0...2.4.1
 [2.4.0]: https://github.com/h4l/sortedcontainers-stubs/releases/tag/v2.4.0
