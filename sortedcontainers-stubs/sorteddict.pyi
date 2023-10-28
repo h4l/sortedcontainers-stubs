@@ -39,10 +39,15 @@ _OrderT = TypeVar(
 KeyFunc: TypeAlias = Callable[[_KT], _OrderT]
 
 class SortedDict(MutableMapping[_KT, _VT]):
+    # mypy 1.5.1 complains about overlapping overloaded function signatures with
+    # incompatible return types. This seems to be because the signatures using
+    # kwargs can would overlap when no kwargs are present, but there's no way to
+    # type a non-empty kwargs param.
+
+    # Should return SortedDict[_OrderT, _VT] but we can't reliably express that.
+    # See comment on SortedList.__new__.
     @overload
-    def __new__(
-        cls,
-    ) -> SortedDict[_OrderT, _VT]: ...
+    def __new__(cls) -> Self: ...  # type: ignore[misc]
     @overload
     def __new__(
         cls,
@@ -69,17 +74,6 @@ class SortedDict(MutableMapping[_KT, _VT]):
         /,
         **kwargs: _VT,
     ) -> SortedKeyDict[str, _VT, _OrderT]: ...
-    # mypy 1.5.1 complains: "Overloaded function signatures 5 and 6 overlap with
-    # incompatible return types  [misc]". If no kwargs are passed, they would
-    # indeed overlap, but there's no way to specify non-empty kwargs. We need
-    # this overload to prevent kwargs adding str keys to non-str __entries.
-    #
-    # Type-enforcement seems to work correct despite the error we ignore here...
-    # Alternatively, we would need to not type calls with both entries and
-    # kwargs.
-    #
-    #  Ideally str would be "str or a superclass of str", but I can't find a way
-    # to type that.
     @overload
     def __new__(  # type: ignore[misc]
         cls,

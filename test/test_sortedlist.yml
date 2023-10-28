@@ -1,3 +1,18 @@
+# Because __new__'s overloads use 0, 1 or 2 two generic types for different
+# overloads, mypy gets confused and complains that specifying 1 type arg is
+# too few, and 2 is too many. So it's not possible to subscript the
+# constructor. Instead, specify the type of the thing the constructor is
+# assigned to.
+- case: constructor_cannot_be_subscripted_with_1_param
+  main: |
+    from sortedcontainers import SortedList
+    SortedList[int]() # E: Type application has too few types (2 expected)  [misc]
+
+- case: constructor_cannot_be_subscripted_with_2_params
+  main: |
+    from sortedcontainers import SortedList
+    SortedList[None, int]() # E: Type application has too many types (1 expected)  [misc]
+
 - case: constructor
   main: |
     from sortedcontainers import SortedList
@@ -6,12 +21,6 @@
     reveal_type(SortedList([1, 2, 3]))  # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
     l: SortedList[int] = SortedList()
     reveal_type(l)                      # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
-
-    # Because __new__'s overloads use two generic types, both need to be
-    # specified when subscripting a constructor call. I'd recommend not doing
-    # this and relying on inference via assignment or parameter types.
-    # (The first type is T which is not used in this overload.)
-    reveal_type(SortedList[None, int]())  # N: Revealed type is "sortedcontainers.sortedlist.SortedList[builtins.int]"
 
     def str_to_int(x: str) -> int:
       return int(x)
@@ -40,6 +49,27 @@
     reveal_type(SortedKeyList(None, str_to_int))  # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
     reveal_type(SortedKeyList(key=str_to_int))    # N: Revealed type is "sortedcontainers.sortedlist.SortedKeyList[builtins.str, builtins.int]"
 
+- case: constructor_references
+  main: |
+    from dataclasses import dataclass, field
+    from sortedcontainers import SortedList, SortedKeyList
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    @dataclass
+    class Example():
+        samples: SortedList[str] = field(default_factory=SortedList)
+        named_samples: SortedKeyList[str, int] = field(
+            default_factory=lambda: SortedKeyList(key=str_to_int)
+        )
+
+    @dataclass
+    class InvalidExample():
+        named_samples: SortedKeyList[float, int] = field(
+            default_factory=lambda: SortedKeyList(key=str_to_int)  # E: Argument "key" to "SortedKeyList" has incompatible type "Callable[[str], int]"; expected "Callable[[float], int]"  [arg-type]
+        )
+
 - case: constructor_errors
   regex: true
   main: |
@@ -53,6 +83,35 @@
 
     # Not comparable
     SortedList([object()])  # E: Value of type variable "_OrderT" of "SortedList" cannot be "object"  \[type-var\]
+
+# We'd like these to be errors, but can't type them at the moment
+- case: constructor_type_issues_1
+  regex: false
+  main: |
+    from sortedcontainers import SortedList, SortedKeyList
+
+    # This would fail when adding > 1 value at runtime
+    non_comparable_elements1: SortedList[type] = SortedList()
+
+    # However, we do type it correctly when values are provided to the constructor
+    non_comparable_elements2: SortedList[type] = SortedList([str])
+  out: |
+    main:7: error: Value of type variable "_OrderT" of "SortedList" cannot be "type[str]"  [type-var]
+    main:7: error: Incompatible types in assignment (expression has type "SortedList[type[str]]", variable has type "SortedList[type]")  [assignment]
+
+- case: constructor_type_issues_2
+  regex: false
+  main: |
+    from sortedcontainers import SortedList, SortedKeyList
+
+    # This would fail when adding > 1 value at runtime
+    non_comparable_elements1: SortedList[type] = SortedKeyList()
+
+    # However, we do type it correctly when values are provided to the constructor
+    non_comparable_elements2: SortedList[type] = SortedKeyList([str])
+  out: |
+    main:7: error: Value of type variable "_OrderT" of "SortedKeyList" cannot be "type[str]"  [type-var]
+    main:7: error: Incompatible types in assignment (expression has type "SortedKeyList[type[str], type[str]]", variable has type "SortedList[type]")  [assignment]
 
 - case: comparison_operators
   main: |

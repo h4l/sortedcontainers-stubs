@@ -24,6 +24,30 @@
     reveal_type(SortedDict(str_to_int, [('a', 1.2)]))         # N: Revealed type is "sortedcontainers.sorteddict.SortedKeyDict[builtins.str, builtins.float, builtins.int]"
     #reveal_type(SortedDict(str_to_int, [('a', 1.2)], a=1.2))  # N_ Revealed type is "sortedcontainers.sorteddict.SortedKeyDict[builtins.str, builtins.float, builtins.int]"
 
+- case: constructor_references
+  main: |
+    from dataclasses import dataclass, field
+    from sortedcontainers import SortedDict
+    from sortedcontainers.sorteddict import SortedKeyDict
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    @dataclass
+    class Example():
+        samples: SortedDict[str, float] = field(default_factory=SortedDict)
+        named_samples: SortedKeyDict[str, float, int] = field(
+            default_factory=lambda: SortedDict(str_to_int)
+        )
+
+    @dataclass
+    class InvalidExample():
+        named_samples: SortedKeyDict[float, float, int] = field(
+            default_factory=lambda: SortedDict(str_to_int)
+        )
+  out: |
+    main:18: error: Argument "default_factory" to "field" has incompatible type "Callable[[], SortedKeyDict[str, float, int]]"; expected "Callable[[], SortedKeyDict[float, float, int]]"  [arg-type]
+    main:18: error: Incompatible return value type (got "SortedKeyDict[str, float, int]", expected "SortedKeyDict[float, float, int]")  [return-value]
 
 - case: constructor_errors
   main: |
@@ -61,6 +85,21 @@
 
   out: |
     main:15: error: List item 0 has incompatible type "tuple[float, str]"; expected "tuple[str, str]"  [list-item]
+
+# We'd like these to be errors, but can't type them at the moment
+- case: constructor_type_issues_1
+  regex: false
+  main: |
+    from sortedcontainers import SortedDict
+
+    # This would fail when adding > 1 value at runtime
+    non_comparable_elements1: SortedDict[type, int] = SortedDict()
+
+    # However, we do type it correctly when values are provided to the constructor
+    non_comparable_elements2: SortedDict[type, int] = SortedDict([(str, 42)])
+  out: |
+    main:7: error: Value of type variable "_OrderT" of "SortedDict" cannot be "type[str]"  [type-var]
+    main:7: error: Incompatible types in assignment (expression has type "SortedDict[type[str], int]", variable has type "SortedDict[type, int]")  [assignment]
 
 
 - case: mutable_mapping_methods

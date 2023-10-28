@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
-from typing import Container, TypeVar
+from dataclasses import dataclass, field
+from typing import Callable, Container, TypeVar
 
 import pytest
-from sortedcontainers import SortedList
+from sortedcontainers import SortedKeyList, SortedList
 
 T = TypeVar("T")
 
@@ -28,16 +29,21 @@ def test_creation_py38() -> None:
     use_sortedlist(object, SortedList(key=id))
 
 
-@not_py38
-def test_creation() -> None:
-    # It's possible to subscript SortedList to specify types, despite the actual
-    # implementation not being typed. SortedList needs two parameters, because
-    # the constructor can return a SortedKeyList which has two. Best not to do
-    # this and infer the type via assignment or arguments instead.
-    use_sortedlist(int, SortedList[None, int]([]))
-    sl = SortedList[None, int]()
-    sl.add(1)
-    assert sl == [1]
+def test_constructor_references() -> None:
+    create: Callable[[], SortedList[int]] = SortedList
+    assert create() == SortedList()
+
+    @dataclass
+    class Example:
+        things1: SortedList[str] = field(default_factory=SortedList)
+        things2: SortedKeyList[type, str] = field(
+            default_factory=lambda: SortedKeyList(key=str)
+        )
+
+    e = Example()
+    e.things1.add("a")
+    e.things2.add(str)
+    e.things2.add(int)
 
 
 def test_unavoidable_type_violations() -> None:
@@ -54,12 +60,24 @@ def test_unavoidable_type_violations() -> None:
         "42" in sl  # type: ignore[operator]
 
     with pytest.raises(TypeError):
-        # Not a type error when using Container
-        c.__contains__("42")
+        # Not a type error when using Container (for mypy at least, pyright uses
+        # the element type, which is not what the pyi files actually declare).
+        c.__contains__("42")  # pyright: ignore
 
     with pytest.raises(TypeError):
         # mypy can detect a possible error via comparison-overlap though
         "42" in c  # type: ignore[comparison-overlap]
+
+    # __new__ is typed to return SortedList[Any] when no args are given because
+    # support for a single generic param in the return position is variable.
+    # MyPy supports it, but pyright doesn't. It doesn't seem to be explicitly
+    # supported by typing PEPs.
+    # As a result, we can create empty SortedList with non-comparable types,
+    # which will fail when values are added at runtime.
+    types: SortedList[type] = SortedList()
+    types.add(str)
+    with pytest.raises(TypeError):
+        types.add(str)
 
 
 def test_operators() -> None:

@@ -1,8 +1,23 @@
+# Because __new__'s overloads use 0, 1 or 2 two generic types for different
+# overloads, mypy gets confused and complains that specifying 1 type arg is
+# too few, and 2 is too many. So it's not possible to subscript the
+# constructor. Instead, specify the type of the thing the constructor is
+# assigned to.
+- case: constructor_cannot_be_subscripted_with_1_param
+  main: |
+    from sortedcontainers import SortedSet
+    SortedSet[int]() # E: Type application has too few types (2 expected)  [misc]
+
+- case: constructor_cannot_be_subscripted_with_2_params
+  main: |
+    from sortedcontainers import SortedSet
+    SortedSet[None, int]() # E: Type application has too many types (1 expected)  [misc]
+
+
 - case: constructor
   main: |
     from sortedcontainers import SortedSet
 
-    reveal_type(SortedSet[None, int]())  # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
     reveal_type(SortedSet())             # N: Revealed type is "sortedcontainers.sortedset.SortedSet[<nothing>]"
     reveal_type(SortedSet([1, 2, 3]))    # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
     l: SortedSet[int] = SortedSet()
@@ -15,6 +30,27 @@
     reveal_type(SortedSet(iterable=None, key=str_to_int))  # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
     reveal_type(SortedSet(key=str_to_int))                 # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
 
+- case: constructor_references
+  main: |
+    from dataclasses import dataclass, field
+    from sortedcontainers import SortedSet
+    from sortedcontainers.sortedset import SortedKeySet
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    @dataclass
+    class Example():
+        samples: SortedSet[str] = field(default_factory=SortedSet)
+        named_samples: SortedKeySet[str, int] = field(
+            default_factory=lambda: SortedSet(key=str_to_int)
+        )
+
+    @dataclass
+    class InvalidExample():
+        named_samples: SortedKeySet[float, int] = field(
+            default_factory=lambda: SortedSet(key=str_to_int)  # E: Argument "key" to "SortedSet" has incompatible type "Callable[[str], int]"; expected "Callable[[float], int]"  [arg-type]
+        )
 
 - case: constructor_errors
   main: |
@@ -39,6 +75,23 @@
     SortedSet([[]], key=id)  # E: Value of type variable "_T" of "SortedSet" cannot be "list[<nothing>]"  [type-var]
     # Hashable but not comparable:
     SortedSet([object()], key=id)  # OK
+
+# We'd like these to be errors, but can't type them at the moment
+- case: constructor_type_issues_1
+  regex: false
+  main: |
+    from sortedcontainers import SortedSet
+    from sortedcontainers.sortedset import SortedKeySet
+
+    # This would fail when adding > 1 value at runtime
+    non_comparable_elements1: SortedSet[type] = SortedSet()
+
+    # However, we do type it correctly when values are provided to the constructor
+    non_comparable_elements2: SortedSet[type] = SortedSet([str])
+  out: |
+    main:8: error: Value of type variable "_OrderT" of "SortedSet" cannot be "type[str]"  [type-var]
+    main:8: error: Incompatible types in assignment (expression has type "SortedSet[type[str]]", variable has type "SortedSet[type]")  [assignment]
+
 
 - case: operators
   main: |

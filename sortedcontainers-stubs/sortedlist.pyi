@@ -19,8 +19,15 @@ class SortedList(MutableSequence[_T]):
     DEFAULT_LOAD_FACTOR: Final[int] = ...
     @overload
     def __new__(cls, key: KeyFunc[_T, _OrderT]) -> SortedKeyList[_T, _OrderT]: ...
+    # Returning SortedList[Any] is a compromise.
+    # The signature should be something like:
+    # (cls: type[SortedList[_OrderT]], ...) -> SortedList[_OrderT]
+    # but neither mypy nor pyright support typing cls like this. If we leave cls
+    # bare then mypy correctly constrains the return type to only allow _OrderT
+    # elements, but pylance doesn't like the solo type argument, and does not
+    # allow the type to be used as () -> SortedList[...].
     @overload
-    def __new__(cls, iterable: None = ..., key: None = ...) -> SortedList[_OrderT]: ...
+    def __new__(cls, iterable: None = ..., key: None = ...) -> Self: ...
     @overload
     def __new__(
         cls, iterable: Iterable[_OrderT], key: None = ...
