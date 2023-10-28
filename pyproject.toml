@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sortedcontainers-stubs"
-version = "2.4.2.dev0"
+version = "2.4.2"
 description = "Type stubs for sortedcontainers"
 homepage = "https://github.com/h4l/sortedcontainers-stubs"
 repository = "https://github.com/h4l/sortedcontainers-stubs"
