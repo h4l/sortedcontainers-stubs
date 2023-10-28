@@ -11,7 +11,28 @@ minor version; the patch version increments independently to release fixes.
 
 ## [Unreleased]
 
-- Nothing yet
+### Fixed
+
+- Using the SortedList (and the other) types as a function that creates an
+  instance of the type works in pyright now.
+  ([#3](https://github.com/h4l/sortedcontainers-stubs/issues/3))
+
+### Changed
+
+- Because of the fix to allow pyright to allow using the types as functions, the
+  constructors with no arguments had to be widened to permit assignment to
+  non-comparable/hashable types. The result is that it's unfortunately not a
+  type error to do something like `sl: SortedList[type] = SortedList()` even
+  though subsequently adding multiple values to this list will fail at runtime.
+
+  It doesn't seem to be possible to type the signature of `__new__` to constrain
+  `SortedList()` to only allow comparable element types in a standard way (mypy
+  supported the previous method which worked, but other checkers don't).
+
+- The signature definition of SortedDict.setdefault was restructured to satisfy
+  pyright, but the effect of the signature itself remains the same.
+
+- pyright runs in CI now
 
 ## [2.4.1] — 2023-10-10
 
