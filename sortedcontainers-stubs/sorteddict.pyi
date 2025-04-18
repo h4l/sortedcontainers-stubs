@@ -86,6 +86,13 @@ class SortedDict(MutableMapping[_KT, _VT]):
     def __new__(
         cls,
         __key: KeyFunc[_KT, _OrderT],
+        /,
+        **kwargs: _VT,
+    ) -> SortedKeyDict[_KT, _VT, _OrderT]: ...
+    @overload
+    def __new__(
+        cls,
+        __key: KeyFunc[_KT, _OrderT],
         __entries: Iterable[tuple[_KT, _VT]] | SupportsKeysAndGetItem[_KT, _VT],
         /,
     ) -> SortedKeyDict[_KT, _VT, _OrderT]: ...

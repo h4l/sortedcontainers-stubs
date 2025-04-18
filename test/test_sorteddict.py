@@ -50,6 +50,15 @@ def test_sorted_key_dict() -> None:
     assert not hasattr(sorted_dict, "bisect_key_left")
 
 
+def test_non_str_key_func() -> None:
+    def key_fn(tup: tuple[int, int]) -> int:
+        a, b = tup
+        return a + b
+
+    _example_empty: SortedDict[tuple[int, int], str] = SortedDict(key_fn)
+    _example: SortedDict[tuple[int, int], str] =  SortedDict(key_fn, [((1, 1), "a"), ((3, -2), "b")])
+
+
 def test_unavoidable_type_violations() -> None:
     # See SortedList's constructor (__new__()) for more on the same issue.
     # We can't constrain the key type to be hashable & orderable when no initial
