@@ -160,6 +160,25 @@ def test_constructor_errors() -> None:
     }
 
 
+def test_setdefault_method() -> None:
+    sd = SortedDict[str, int]()
+    sd.setdefault("a", 1)
+    sd.setdefault("a", 1)
+    # SortedDict supports keywords args, but regular dict.setdefault does not does not
+    sd.setdefault(key="b", default=2)
+    assert [*sd.items()] == [("a", 1), ("b", 2)]
+
+    if TYPE_CHECKING:  # None can't be used as a default if _VT is not None
+        sd.setdefault("a", None)  # type: ignore[arg-type]
+        sd.setdefault("a")  # type: ignore[call-arg]
+
+    opt_sd = SortedDict[str, "int | None"]()
+    opt_sd.setdefault("a", None)
+    opt_sd.setdefault("b")
+    opt_sd.setdefault("c", 1)
+    assert [*opt_sd.items()] == [("a", None), ("b", None), ("c", 1)]
+
+
 def test_sorted_key_dict() -> None:
     def str_to_int(x: str) -> int:
         return int(x)
