@@ -44,10 +44,10 @@ class SortedDict(MutableMapping[_KT, _VT]):
     # kwargs can would overlap when no kwargs are present, but there's no way to
     # type a non-empty kwargs param.
 
-    # Should return SortedDict[_OrderT, _VT] but we can't reliably express that.
-    # See comment on SortedList.__new__.
     @overload
-    def __new__(cls) -> Self: ...  # type: ignore[misc]
+    def __new__(
+        cls,
+    ) -> SortedDict[_KT, _VT]: ...
     @overload
     def __new__(
         cls,
