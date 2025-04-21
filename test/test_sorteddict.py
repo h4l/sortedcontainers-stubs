@@ -41,6 +41,11 @@ def test_constructor() -> None:
         SortedDict(str_key_fn),  # pyright: ignore [reportAssertTypeFailure]
         "SortedKeyDict[str, Never, int]",
     )
+    # TODO: support this call (see issue #6)
+    assert_type(  # type: ignore[assert-type] # FIXME
+        SortedDict[tuple[int, int], float](key_fn),  # type: ignore[arg-type] # FIXME
+        "SortedKeyDict[tuple[int, int], float, int]",
+    )
 
     assert_type(SortedDict(str_key_fn, a=1.2), "SortedKeyDict[str, float, int]")
     assert_type(SortedDict(str_key_fn, [(s, 1.2)]), "SortedKeyDict[str, float, int]")
@@ -180,3 +185,24 @@ def test_unavoidable_type_violations() -> None:
     broken[str] = 42
     with pytest.raises(TypeError):
         broken[bytes] = 12
+
+
+@pytest.mark.xfail(raises=AssertionError)
+def test_regression_issue6_non_str_key_fn_with_no_iterable() -> None:
+    """
+    `SortedDict(key_fn)` is a valid call, but types incorrectly disallow it.
+
+    https://github.com/h4l/sortedcontainers-stubs/issues/6
+    """
+
+    def key_fn(tup: tuple[int, int]) -> int:
+        a, b = tup
+        return a + b
+
+    # FIXME: this should not be a type error
+    sd: SortedKeyDict[tuple[int, int], float, int] = SortedDict[tuple[int, int], float](key_fn)  # type: ignore[assignment,arg-type] # noqa: E501
+    sd[(1, 2)] = 1.5
+    sd[(-2, 2)] = 3.0
+    assert list(sd.items()) == [((-2, 2), 3.0), ((1, 2), 1.5)]
+
+    assert False, "FIXME"
