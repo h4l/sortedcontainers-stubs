@@ -5,7 +5,7 @@ group "default" {
 target "test" {
     name = "test_python-${replace(py, ".", "-")}"
     matrix = {
-        py = ["3.8", "3.9", "latest"],
+        py = ["3.9", "latest"],
     }
     args = {
         PYTHON_VER = py == "latest" ? "slim" : "${py}-slim"

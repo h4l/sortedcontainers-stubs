@@ -22,7 +22,7 @@ Issues = "https://github.com/h4l/sortedcontainers-stubs/issues"
 Changes = "https://github.com/h4l/sortedcontainers-stubs/blob/main/CHANGELOG.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 sortedcontainers = "^2"
 typing-extensions = "^4.1.0" # 4.1.0 introduced Never
 
@@ -56,6 +56,7 @@ extra_standard_library = ["typing_extensions"]
 
 [tool.mypy]
 strict = true
+python_version = "3.9"
 
 [tool.pyright]
 include = ["sortedcontainers-stubs", "test"]
