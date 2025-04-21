@@ -87,3 +87,22 @@ def test_unavoidable_type_violations() -> None:
     broken.add(str)
     with pytest.raises(TypeError):
         broken.add(bytes)
+
+
+@pytest.mark.xfail(raises=AssertionError)
+def test_regression_issue10_constructor_key_only() -> None:
+    """
+    SortedSet constructor is incorrectly typed to allow a positional key
+    argument with no `iterable` arg. This should be a static type error.
+
+    https://github.com/h4l/sortedcontainers-stubs/issues/10
+    """
+
+    def key_fn(arg: int) -> str:
+        return str(arg)
+
+    with pytest.raises(TypeError, match=r"'function' object is not iterable"):
+        # FIXME: this should be a type error
+        SortedSet(key_fn)
+
+    assert False, "FIXME"
