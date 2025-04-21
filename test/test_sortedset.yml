@@ -1,35 +1,3 @@
-# Because __new__'s overloads use 0, 1 or 2 two generic types for different
-# overloads, mypy gets confused and complains that specifying 1 type arg is
-# too few, and 2 is too many. So it's not possible to subscript the
-# constructor. Instead, specify the type of the thing the constructor is
-# assigned to.
-- case: constructor_cannot_be_subscripted_with_1_param
-  main: |
-    from sortedcontainers import SortedSet
-    SortedSet[int]() # E: Type application has too few types (2 expected)  [misc]
-
-- case: constructor_cannot_be_subscripted_with_2_params
-  main: |
-    from sortedcontainers import SortedSet
-    SortedSet[None, int]() # E: Type application has too many types (1 expected)  [misc]
-
-
-- case: constructor
-  main: |
-    from sortedcontainers import SortedSet
-
-    reveal_type(SortedSet())             # N: Revealed type is "sortedcontainers.sortedset.SortedSet[<nothing>]"
-    reveal_type(SortedSet([1, 2, 3]))    # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
-    l: SortedSet[int] = SortedSet()
-    reveal_type(l)                       # N: Revealed type is "sortedcontainers.sortedset.SortedSet[builtins.int]"
-
-    def str_to_int(x: str) -> int:
-      return int(x)
-
-    reveal_type(SortedSet(None, str_to_int))               # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
-    reveal_type(SortedSet(iterable=None, key=str_to_int))  # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
-    reveal_type(SortedSet(key=str_to_int))                 # N: Revealed type is "sortedcontainers.sortedset.SortedKeySet[builtins.str, builtins.int]"
-
 - case: constructor_references
   main: |
     from dataclasses import dataclass, field
@@ -65,14 +33,14 @@
     # Without a key func, values must be hashable and comparable.
 
     # Comparable but not hashable:
-    SortedSet([[]])  # E: Value of type variable "_OrderT" of "SortedSet" cannot be "list[<nothing>]"  [type-var]
+    SortedSet([[]])  # E: Value of type variable "_OrderT" of "SortedSet" cannot be "list[Never]"  [type-var]
     # Hashable but not comparable:
     SortedSet([object()])  # E: Value of type variable "_OrderT" of "SortedSet" cannot be "object"  [type-var]
 
     # With a key func, values only need to be hashable:
 
     # Comparable but not hashable:
-    SortedSet([[]], key=id)  # E: Value of type variable "_T" of "SortedSet" cannot be "list[<nothing>]"  [type-var]
+    SortedSet([[]], key=id)  # E: Value of type variable "_T" of "SortedSet" cannot be "list[Never]"  [type-var]
     # Hashable but not comparable:
     SortedSet([object()], key=id)  # OK
 
@@ -293,4 +261,4 @@
     reveal_type(SortedKeySet())
   out: |
     main:2: error: Missing named argument "this_type_only_exists_as_a_type_annotation_it_cannot_be_created_directly" for "SortedKeySet"  [call-arg]
-    main:2: note: Revealed type is "<nothing>"
+    main:2: note: Revealed type is "Never"

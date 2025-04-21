@@ -3,12 +3,34 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable
+from typing_extensions import Never, assert_type
 
 import pytest
 from sortedcontainers import SortedSet
 
 if TYPE_CHECKING:
     from sortedcontainers.sortedset import SortedKeySet
+
+
+def test_constructor() -> None:
+    assert_type(
+        SortedSet(), SortedSet[Never]  # pyright: ignore[reportAssertTypeFailure]
+    )
+    assert_type(SortedSet[int](), SortedSet[int])
+
+    assert_type(SortedSet([1, 2, 3]), SortedSet[int])
+
+    l: SortedSet[int] = SortedSet()
+    assert_type(l, SortedSet[int])
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    assert_type(SortedSet(None, str_to_int), "SortedKeySet[str, int]")
+
+    assert_type(SortedSet(iterable=None, key=str_to_int), "SortedKeySet[str, int]")
+
+    assert_type(SortedSet(key=str_to_int), "SortedKeySet[str, int]")
 
 
 def test_contains() -> None:
@@ -24,7 +46,9 @@ def test_constructor_references() -> None:
 
     @dataclass
     class Example:
-        things1: SortedSet[str] = field(default_factory=SortedSet)
+        things1: SortedSet[str] = field(  # pyright: ignore[reportUnknownVariableType]
+            default_factory=SortedSet
+        )
         things2: SortedKeySet[type, str] = field(
             default_factory=lambda: SortedSet(key=str)
         )

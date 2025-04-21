@@ -1,6 +1,7 @@
 ARG PYTHON_VER
 
 FROM python:${PYTHON_VER:?} AS python-base
+SHELL ["bash", "-euo", "pipefail", "-c"]
 
 
 FROM python-base AS poetry
@@ -20,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache poetry install
 FROM poetry AS test
 RUN --mount=source=.,target=/workspace,rw \
     --mount=type=cache,uid=1000,target=.pytest_cache \
-    pytest
+    pytest | sed -E -e 's|(^\|\s+)/workspace/|\1.\/|'
 
 
 FROM poetry AS lint-flake8
@@ -53,4 +54,4 @@ COPY --link --from=poetry /venv /venv
 
 FROM pyright AS lint-pyright
 RUN --mount=source=.,target=/workspace,rw \
-    pyright --pythonpath /venv/bin/python .
+    pyright --pythonpath /venv/bin/python . | sed -E -e 's|(^\|\s+)/workspace/|\1.\/|'

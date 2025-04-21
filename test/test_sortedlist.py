@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
 from typing import Callable, Container, TypeVar
+from typing_extensions import Never, assert_type
 
 import pytest
 from sortedcontainers import SortedKeyList, SortedList
@@ -29,13 +30,80 @@ def test_creation_py38() -> None:
     use_sortedlist(object, SortedList(key=id))
 
 
+def test_constructor_cannot_be_subscripted_with_1_param() -> None:
+    # Because __new__'s overloads use 0, 1 or 2 two generic types for different
+    # overloads, mypy gets confused and complains that specifying 1 type arg is
+    # too few, and 2 is too many. So it's not possible to subscript the
+    # constructor. Instead, specify the type of the thing the constructor is
+    # assigned to.
+    _ = SortedList[int]()  # type: ignore[misc] # Type application has too few types (2 expected) # noqa: E501
+
+    # It's only the constructor that has problems
+    sl: SortedList[int] = SortedList([3, 2, 1])
+    assert list(assert_type(sl, SortedList[int])) == [1, 2, 3]
+
+
+@pytest.mark.xfail
+def test_constructor_cannot_be_subscripted_with_2_params() -> None:
+    # Too many generic type params
+
+    # FIXME: this used to be a type error but causes mypy 1.15.0 to crash with
+    #        an internal error.
+    # assert_type(SortedList[None, int](), Any)  # type: ignore[misc] # Type application has too many types (1 expected) # noqa: E501
+    assert False, "FIXME"
+
+
+def test_constructor() -> None:
+    assert_type(
+        SortedList(), SortedList[Never]  # pyright: ignore[reportAssertTypeFailure]
+    )
+
+    assert_type(SortedList([1, 2, 3]), SortedList[int])
+
+    l: SortedList[int] = SortedList()
+    assert_type(l, SortedList[int])
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    # SortedList constructor returns SortedKeyList when a key function is passed
+    assert_type(SortedList(None, str_to_int), SortedKeyList[str, int])
+    assert_type(SortedList(key=str_to_int), SortedKeyList[str, int])
+
+
+def test_SortedKeyList_constructor() -> None:
+    # SortedKeyList constructor always returns SortedKeyList
+    assert_type(SortedKeyList[int, int](), SortedKeyList[int, int])
+
+    assert_type(
+        SortedKeyList(),  # pyright: ignore[reportAssertTypeFailure]
+        SortedKeyList[Never, Never],
+    )
+
+    assert_type(SortedKeyList([1, 2, 3]), SortedKeyList[int, int])
+
+    _l: SortedKeyList[int, int] = SortedKeyList()  # noqa: F841
+
+    # Can create a SortedList with a non-comparable type like this
+    _l2: SortedList[object] = SortedKeyList([[], object()], key=id)  # noqa: F841
+
+    def str_to_int(x: str) -> int:
+        return int(x)
+
+    assert_type(SortedKeyList(None, str_to_int), SortedKeyList[str, int])
+
+    assert_type(SortedKeyList(key=str_to_int), SortedKeyList[str, int])
+
+
 def test_constructor_references() -> None:
     create: Callable[[], SortedList[int]] = SortedList
     assert create() == SortedList()
 
     @dataclass
     class Example:
-        things1: SortedList[str] = field(default_factory=SortedList)
+        things1: SortedList[str] = field(  # pyright: ignore[reportUnknownVariableType]
+            default_factory=SortedList
+        )
         things2: SortedKeyList[type, str] = field(
             default_factory=lambda: SortedKeyList(key=str)
         )
@@ -44,6 +112,22 @@ def test_constructor_references() -> None:
     e.things1.add("a")
     e.things2.add(str)
     e.things2.add(int)
+
+    def str_to_int(x: str) -> int:
+        if not isinstance(x, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(f"x must be str, not {type(x)}")
+        return int(x)
+
+    # Wrong key type is (static and runtime) type error
+    @dataclass
+    class InvalidExample:
+        named_samples: SortedKeyList[float, int] = field(
+            default_factory=lambda: SortedKeyList(key=str_to_int)  # type: ignore[arg-type] # noqa: E501
+        )
+
+    ex = InvalidExample()
+    with pytest.raises(TypeError):
+        ex.named_samples.add(1.5)
 
 
 def test_unavoidable_type_violations() -> None:
