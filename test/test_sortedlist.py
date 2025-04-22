@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
-from typing import Callable, Container, TypeVar
+from typing import Any, Callable, Container, TypeVar
 from typing_extensions import Never, assert_type
 
 import pytest
@@ -202,5 +202,22 @@ def test_regression_issue10_constructor_key_only() -> None:
     with pytest.raises(TypeError, match=r"'function' object is not iterable"):
         # FIXME: this should be a type error
         SortedKeyList(key_fn)
+
+    assert False, "FIXME"
+
+
+@pytest.mark.xfail(raises=AssertionError)
+def test_regression_issue12_sortedkeylist_constructor_key_none() -> None:
+    """
+    SortedKeyList constructor is incorrectly typed to allow `key` to be None.
+    In fact `key` must be a callable, None is not converted to the identity
+    function, despite the default key value being identity if not provided.
+
+    https://github.com/h4l/sortedcontainers-stubs/issues/12
+    """
+
+    with pytest.raises(TypeError, match=r"'NoneType' object is not callable"):
+        # FIXME: should be a type error
+        SortedKeyList[Any, Any](key=None).add(1)
 
     assert False, "FIXME"
