@@ -20,8 +20,6 @@ class SortedSet(MutableSet[_T], Sequence[_T]):
     @overload
     def __new__(cls, iterable: Iterable[_OrderT]) -> SortedSet[_OrderT]: ...
     @overload
-    def __new__(cls, key: KeyFunc[_T, _OrderT]) -> SortedKeySet[_T, _OrderT]: ...
-    @overload
     def __new__(cls, iterable: None = ..., key: None = ...) -> Self: ...
     @overload
     def __new__(cls, iterable: Iterable[_OrderT], key: None) -> SortedSet[_OrderT]: ...
@@ -29,6 +27,13 @@ class SortedSet(MutableSet[_T], Sequence[_T]):
     def __new__(
         cls,
         iterable: Iterable[_T] | None,
+        key: KeyFunc[_T, _OrderT],
+    ) -> SortedKeySet[_T, _OrderT]: ...
+    @overload
+    def __new__(
+        cls,
+        iterable: Iterable[_T] | None = ...,
+        *,
         key: KeyFunc[_T, _OrderT],
     ) -> SortedKeySet[_T, _OrderT]: ...
     @property

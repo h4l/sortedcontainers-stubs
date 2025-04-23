@@ -89,7 +89,6 @@ def test_unavoidable_type_violations() -> None:
         broken.add(bytes)
 
 
-@pytest.mark.xfail(raises=AssertionError)
 def test_regression_issue10_constructor_key_only() -> None:
     """
     SortedSet constructor is incorrectly typed to allow a positional key
@@ -102,7 +101,5 @@ def test_regression_issue10_constructor_key_only() -> None:
         return str(arg)
 
     with pytest.raises(TypeError, match=r"'function' object is not iterable"):
-        # FIXME: this should be a type error
-        SortedSet(key_fn)
-
-    assert False, "FIXME"
+        # Intentional invalid call — must be static type error.
+        SortedSet(key_fn)  # type: ignore[call-overload]
