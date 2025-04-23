@@ -110,22 +110,22 @@ class SortedKeyList(SortedList[_T], Generic[_T, _OrderT]):
     # identity function as the default key func.
     @overload
     def __new__(
-        cls, iterable: Iterable[_OrderT]
-    ) -> SortedKeyList[_OrderT, _OrderT]: ...
-    @overload
-    def __new__(cls, key: KeyFunc[_T, _OrderT]) -> SortedKeyList[_T, _OrderT]: ...
-    @overload
-    def __new__(cls, iterable: None = ..., key: None = ...) -> Self: ...
-    @overload
-    def __new__(
-        cls, iterable: Iterable[_OrderT], key: None
-    ) -> SortedKeyList[_OrderT, _OrderT]: ...
-    @overload
-    def __new__(
         cls,
         iterable: Iterable[_T] | None,
         key: KeyFunc[_T, _OrderT],
     ) -> SortedKeyList[_T, _OrderT]: ...
+    @overload
+    def __new__(
+        cls,
+        iterable: Iterable[_T] | None = ...,
+        *,
+        key: KeyFunc[_T, _OrderT],
+    ) -> SortedKeyList[_T, _OrderT]: ...
+    @overload
+    def __new__(
+        cls,
+        iterable: Iterable[_OrderT] | None = ...,
+    ) -> SortedKeyList[_OrderT, _OrderT]: ...
     @property
     def key(self) -> KeyFunc[_T, _OrderT]: ...
     def irange_key(

@@ -177,7 +177,6 @@ def test_regression_issue10_constructor_key_only() -> None:
         SortedList(key_fn)  # type: ignore[call-overload]
 
 
-@pytest.mark.xfail
 def test_regression_issue10_sortedkeylist_constructor_key_only() -> None:
     """
     SortedKeyList constructor was incorrectly typed to allow a positional key
@@ -190,24 +189,19 @@ def test_regression_issue10_sortedkeylist_constructor_key_only() -> None:
         return str(arg)
 
     with pytest.raises(TypeError, match=r"'function' object is not iterable"):
-        # FIXME: this should be a type error
-        SortedKeyList(key_fn)
-
-    assert False, "FIXME"
+        # Intentional invalid call — must be static type error.
+        SortedKeyList(key_fn)  # type: ignore[call-overload]
 
 
-@pytest.mark.xfail(raises=AssertionError)
 def test_regression_issue12_sortedkeylist_constructor_key_none() -> None:
     """
-    SortedKeyList constructor is incorrectly typed to allow `key` to be None.
+    SortedKeyList constructor was incorrectly typed to allow `key` to be None.
     In fact `key` must be a callable, None is not converted to the identity
     function, despite the default key value being identity if not provided.
 
     https://github.com/h4l/sortedcontainers-stubs/issues/12
     """
-
     with pytest.raises(TypeError, match=r"'NoneType' object is not callable"):
-        # FIXME: should be a type error
-        SortedKeyList[Any, Any](key=None).add(1)
-
-    assert False, "FIXME"
+        # Intentional invalid call — must be static type error.
+        sl = SortedKeyList[Any, Any](key=None)  # type: ignore[call-overload]
+        sl.add(1)
