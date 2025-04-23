@@ -13,6 +13,43 @@ minor version; the patch version increments independently to release fixes.
 
 - Nothing yet
 
+## [2.4.3] — 2025-04-23
+
+### Fixed
+
+- `SortedDict()` constructor:
+  - Now allows `SortedDict(key_fn)` where `key_fn` accepts a non-string key.
+    Previously this call was not matched by any overload, and an explicit
+    `iterable` argument had to be provided. Thanks to [@tomtung] for reporting
+    and helping to fix this. (issue [#6], fixed in [#11])
+  - Now allows annotating the constructor explicitly with
+    `SortedDict[xxx, yyy]()`. Previously mypy failed to handle this. ([#11])
+- `SortedList()` constructor:
+  - No longer accepts `SortedList(key_fn)`, which resulted in a type error at
+    runtime. Calls without an iterable must be `SortedList(key=key_fn)`. (issue
+    [#10], fixed in[#11])
+  - Now allows annotating the constructor explicitly with `SortedList[xxx]()`.
+    Previously mypy failed to handle this. ([#11])
+- `SortedKeyList()` constructor:
+  - No longer accepts `SortedKeyList(key_fn)`, which resulted in a type error at
+    runtime. Calls without an iterable must be `SortedKeyList(key=key_fn)`.
+    (issue [#10], fixed in[#11])
+  - No longer accepts `SortedKeyList(key=None)`, which resulted in a type error
+    at runtime. `key` is now required to not be None. (issue [#12], fixed
+    in[#11])
+- `SortedSet()` constructor:
+  - No longer accepts `SortedSet(key_fn)`, which resulted in a type error at
+    runtime. Calls without an iterable must be `SortedSet(key=key_fn)`. (issue
+    [#10], fixed in[#11])
+  - Now allows annotating the constructor explicitly with `SortedSet[xxx]()`.
+    Previously mypy failed to handle this. ([#11])
+
+[@tomtung]: https://github.com/tomtung
+[#6]: https://github.com/h4l/sortedcontainers-stubs/issues/6
+[#10]: https://github.com/h4l/sortedcontainers-stubs/issues/10
+[#11]: https://github.com/h4l/sortedcontainers-stubs/issues/11
+[#12]: https://github.com/h4l/sortedcontainers-stubs/issues/12
+
 ## [2.4.2] — 2023-10-28
 
 ### Fixed
@@ -87,6 +124,7 @@ Created by Martin Larralde with review from several people in the PR.
 
 [unreleased]:
   https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.1...HEAD
+[2.4.3]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.2...2.4.3
 [2.4.2]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.1...2.4.2
 [2.4.1]: https://github.com/h4l/sortedcontainers-stubs/compare/v2.4.0...2.4.1
 [2.4.0]: https://github.com/h4l/sortedcontainers-stubs/releases/tag/v2.4.0
