@@ -17,8 +17,6 @@ KeyFunc: TypeAlias = Callable[[_T], _OrderT]
 
 class SortedList(MutableSequence[_T]):
     DEFAULT_LOAD_FACTOR: Final[int] = ...
-    @overload
-    def __new__(cls, key: KeyFunc[_T, _OrderT]) -> SortedKeyList[_T, _OrderT]: ...
     # Returning SortedList[Any] is a compromise.
     # The signature should be something like:
     # (cls: type[SortedList[_OrderT]], ...) -> SortedList[_OrderT]
@@ -36,6 +34,13 @@ class SortedList(MutableSequence[_T]):
     def __new__(
         cls,
         iterable: Iterable[_T] | None,
+        key: KeyFunc[_T, _OrderT],
+    ) -> SortedKeyList[_T, _OrderT]: ...
+    @overload
+    def __new__(
+        cls,
+        iterable: Iterable[_T] | None = ...,
+        *,
         key: KeyFunc[_T, _OrderT],
     ) -> SortedKeyList[_T, _OrderT]: ...
     @property

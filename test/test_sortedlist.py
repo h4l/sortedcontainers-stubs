@@ -30,33 +30,11 @@ def test_creation_py38() -> None:
     use_sortedlist(object, SortedList(key=id))
 
 
-def test_constructor_cannot_be_subscripted_with_1_param() -> None:
-    # Because __new__'s overloads use 0, 1 or 2 two generic types for different
-    # overloads, mypy gets confused and complains that specifying 1 type arg is
-    # too few, and 2 is too many. So it's not possible to subscript the
-    # constructor. Instead, specify the type of the thing the constructor is
-    # assigned to.
-    _ = SortedList[int]()  # type: ignore[misc] # Type application has too few types (2 expected) # noqa: E501
-
-    # It's only the constructor that has problems
-    sl: SortedList[int] = SortedList([3, 2, 1])
-    assert list(assert_type(sl, SortedList[int])) == [1, 2, 3]
-
-
-@pytest.mark.xfail
-def test_constructor_cannot_be_subscripted_with_2_params() -> None:
-    # Too many generic type params
-
-    # FIXME: this used to be a type error but causes mypy 1.15.0 to crash with
-    #        an internal error.
-    # assert_type(SortedList[None, int](), Any)  # type: ignore[misc] # Type application has too many types (1 expected) # noqa: E501
-    assert False, "FIXME"
-
-
 def test_constructor() -> None:
     assert_type(
         SortedList(), SortedList[Never]  # pyright: ignore[reportAssertTypeFailure]
     )
+    assert_type(SortedList[int](), SortedList[int])
 
     assert_type(SortedList([1, 2, 3]), SortedList[int])
 
@@ -183,11 +161,10 @@ def test_operators() -> None:
     assert s != s2
 
 
-@pytest.mark.xfail(raises=AssertionError)
 def test_regression_issue10_constructor_key_only() -> None:
     """
-    SortedList constructor is incorrectly typed to allow a positional key
-    argument with no `iterable` arg. This should be a static type error.
+    SortedList constructor was incorrectly typed to allow a positional key
+    argument with no `iterable` arg.
 
     https://github.com/h4l/sortedcontainers-stubs/issues/10
     """
@@ -196,8 +173,21 @@ def test_regression_issue10_constructor_key_only() -> None:
         return str(arg)
 
     with pytest.raises(TypeError, match=r"'function' object is not iterable"):
-        # FIXME: this should be a type error
-        SortedList(key_fn)
+        # Intentional invalid call — must be static type error.
+        SortedList(key_fn)  # type: ignore[call-overload]
+
+
+@pytest.mark.xfail
+def test_regression_issue10_sortedkeylist_constructor_key_only() -> None:
+    """
+    SortedKeyList constructor was incorrectly typed to allow a positional key
+    argument with no `iterable` arg.
+
+    https://github.com/h4l/sortedcontainers-stubs/issues/10
+    """
+
+    def key_fn(arg: int) -> str:
+        return str(arg)
 
     with pytest.raises(TypeError, match=r"'function' object is not iterable"):
         # FIXME: this should be a type error
